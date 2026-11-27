@@ -375,29 +375,57 @@ async function renderClassesTeachersPage(container) {
 
 async function renderUsersPage(container) {
   document.getElementById('topbar-page-title').textContent = 'Manajemen Akun Pengguna';
-  document.getElementById('topbar-page-subtitle').textContent = 'Kelola akun login Admin, Musyrif/Guru, Siswa Asrama, dan Orang Tua';
+  document.getElementById('topbar-page-subtitle').textContent = 'Kelola akun login Admin, Musyrif/Guru, Siswa Asrama, dan Orang Tua (termasuk relasi 1 Orang Tua dengan banyak anak)';
 
-  const users = await apiCall('getUsers');
+  const [users, students, relations] = await Promise.all([
+    apiCall('getUsers'),
+    apiCall('getStudents'),
+    apiCall('getParentRelations').catch(() => [])
+  ]);
+
+  const relByParent = {};
+  relations.forEach(r => {
+    const pid = r.parent_id;
+    if (!relByParent[pid]) relByParent[pid] = [];
+    relByParent[pid].push(r);
+  });
+
   container.innerHTML = `
     <div class="card">
       <div class="card-header">
         <div class="card-title"><i class="ri-shield-user-line"></i> Daftar Akun Terdaftar (${users.length})</div>
-        <button class="btn btn-primary btn-sm" onclick="openUserModal()"><i class="ri-user-add-line"></i> Buat Akun Baru</button>
+        <button class="btn btn-primary btn-sm" onclick='openUserModal(null, ${JSON.stringify(students)}, ${JSON.stringify(relByParent)})'>
+          <i class="ri-user-add-line"></i> Buat Akun Baru
+        </button>
       </div>
       <div class="card-body table-responsive">
         <table>
-          <thead><tr><th>Username</th><th>Nama Lengkap</th><th>Peran</th><th>ID Referensi</th><th>Status</th><th>Aksi</th></tr></thead>
+          <thead><tr><th>Username</th><th>Nama Lengkap</th><th>Peran</th><th>ID Referensi / Anak Terhubung</th><th>Status</th><th>Aksi</th></tr></thead>
           <tbody>
-            ${users.map(u => `
-              <tr>
-                <td><strong>${escapeHtml(u.username)}</strong></td>
-                <td>${escapeHtml(u.full_name)}</td>
-                <td><span class="badge badge-info">${escapeHtml(u.role)}</span></td>
-                <td>${escapeHtml(u.ref_id || '-')}</td>
-                <td>${u.is_active ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Nonaktif</span>'}</td>
-                <td><button class="btn btn-outline btn-sm" onclick='openUserModal(${JSON.stringify(u)})'>Edit / Reset PW</button></td>
-              </tr>
-            `).join('')}
+            ${users.map(u => {
+              const parentKey = u.ref_id || u.user_id;
+              const linkedKids = u.role === 'ORANG_TUA' ? (relByParent[parentKey] || []) : [];
+              const refDisplay = u.role === 'ORANG_TUA'
+                ? (linkedKids.length > 0
+                    ? linkedKids.map(k => `<span class="badge badge-success" style="margin:2px 2px 2px 0;">${escapeHtml(k.student_name)}</span>`).join('')
+                    : `<span class="badge badge-warning">Belum terhubung ke anak</span>`)
+                : escapeHtml(u.ref_id || '-');
+
+              return `
+                <tr>
+                  <td><strong>${escapeHtml(u.username)}</strong></td>
+                  <td>${escapeHtml(u.full_name)}</td>
+                  <td><span class="badge badge-info">${escapeHtml(u.role)}</span></td>
+                  <td>${refDisplay}</td>
+                  <td>${u.is_active ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Nonaktif</span>'}</td>
+                  <td>
+                    <button class="btn btn-outline btn-sm" onclick='openUserModal(${JSON.stringify(u)}, ${JSON.stringify(students)}, ${JSON.stringify(relByParent)})'>
+                      Edit / Atur Anak
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
           </tbody>
         </table>
       </div>
@@ -405,43 +433,106 @@ async function renderUsersPage(container) {
   `;
 }
 
-function openUserModal(u = null) {
-  openModal(u ? 'Edit Akun & Reset Password' : 'Buat Akun Pengguna Baru', `
-    <form onsubmit="submitUserForm(event, '${u ? u.user_id : ''}')">
+function toggleParentChildrenSection() {
+  const role = document.getElementById('usr-role').value;
+  const parentBox = document.getElementById('parent-children-box');
+  const refBox = document.getElementById('usr-ref-box');
+  if (parentBox) parentBox.classList.toggle('hidden', role !== 'ORANG_TUA');
+  if (refBox) refBox.classList.toggle('hidden', role === 'ORANG_TUA');
+}
+
+function filterParentStudentCheckboxes() {
+  const q = (document.getElementById('parent-child-search').value || '').toLowerCase();
+  document.querySelectorAll('.parent-child-option').forEach(el => {
+    const name = el.getAttribute('data-name') || '';
+    el.style.display = name.includes(q) ? 'flex' : 'none';
+  });
+}
+
+function openUserModal(u = null, students = [], relByParent = {}) {
+  const isParent = u && u.role === 'ORANG_TUA';
+  const parentKey = u ? (u.ref_id || u.user_id) : '';
+  const selectedIds = new Set((relByParent[parentKey] || []).map(r => String(r.student_id)));
+
+  openModal(u ? 'Edit Akun & Pengaturan Relasi' : 'Buat Akun Pengguna Baru', `
+    <form onsubmit="submitUserForm(event, '${u ? u.user_id : ''}', '${escapeHtml(parentKey)}')">
       <div class="form-row">
         <div class="form-group"><label>Username</label><input type="text" id="usr-username" value="${escapeHtml(u ? u.username : '')}" required></div>
         <div class="form-group">
           <label>Peran (Role)</label>
-          <select id="usr-role">
+          <select id="usr-role" onchange="toggleParentChildrenSection()">
             <option value="ADMIN" ${u && u.role === 'ADMIN' ? 'selected' : ''}>ADMIN</option>
             <option value="GURU" ${u && u.role === 'GURU' ? 'selected' : ''}>GURU / MUSYRIF</option>
             <option value="SISWA" ${u && u.role === 'SISWA' ? 'selected' : ''}>SISWA ASRAMA</option>
-            <option value="ORANG_TUA" ${u && u.role === 'ORANG_TUA' ? 'selected' : ''}>ORANG TUA</option>
+            <option value="ORANG_TUA" ${isParent ? 'selected' : ''}>ORANG TUA</option>
           </select>
         </div>
       </div>
       <div class="form-group"><label>Nama Lengkap</label><input type="text" id="usr-fullname" value="${escapeHtml(u ? u.full_name : '')}" required></div>
       <div class="form-row">
-        <div class="form-group"><label>ID Referensi (Misal: STD-2026-001)</label><input type="text" id="usr-ref" value="${escapeHtml(u ? u.ref_id : '')}"></div>
-        <div class="form-group"><label>${u ? 'Password Baru (Kosongkan jika tetap)' : 'Password (Min 6 karakter)'}</label><input type="password" id="usr-pw" ${u ? '' : 'required minlength="6"'}></div>
+        <div class="form-group ${isParent ? 'hidden' : ''}" id="usr-ref-box">
+          <label>ID Referensi (Misal: STD-2026-001)</label>
+          <input type="text" id="usr-ref" value="${escapeHtml(u ? u.ref_id : '')}">
+        </div>
+        <div class="form-group">
+          <label>${u ? 'Password Baru (Kosongkan jika tetap)' : 'Password (Min 6 karakter)'}</label>
+          <input type="password" id="usr-pw" ${u ? '' : 'required minlength="6"'}>
+        </div>
       </div>
+
+      <div id="parent-children-box" class="form-group ${isParent ? '' : 'hidden'}" style="border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:12px;background:var(--bg-muted);">
+        <label style="margin-bottom:4px;">Pilih Putra / Putri yang Terhubung (Bisa pilih 1, 2, atau lebih):</label>
+        <input type="text" id="parent-child-search" placeholder="Ketik nama siswa untuk mencari..." onkeyup="filterParentStudentCheckboxes()" style="margin-bottom:10px;padding:7px 10px;font-size:12.5px;">
+        <div style="max-height:190px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+          ${students.map(st => `
+            <label class="parent-child-option" data-name="${escapeHtml(st.full_name.toLowerCase())}" style="display:flex;align-items:center;gap:8px;font-weight:500;margin:0;padding:6px 8px;background:#fff;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;">
+              <input type="checkbox" class="parent-child-cb" value="${escapeHtml(st.student_id)}" ${selectedIds.has(String(st.student_id)) ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--primary);">
+              <span>${escapeHtml(st.full_name)} <small style="color:var(--text-muted)">(${escapeHtml(st.class_name)})</small></span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+
       <button type="submit" class="btn btn-primary btn-block">Simpan Akun</button>
     </form>
   `);
 }
 
-async function submitUserForm(e, userId) {
+async function submitUserForm(e, userId, existingParentRef) {
   e.preventDefault();
-  showLoader(true);
+  const role = document.getElementById('usr-role').value;
+  const username = document.getElementById('usr-username').value.trim();
+  const parentRefId = role === 'ORANG_TUA'
+    ? (existingParentRef || ('PRT-' + username.toUpperCase()))
+    : document.getElementById('usr-ref').value.trim();
+
+  const selectedStudentIds = role === 'ORANG_TUA'
+    ? Array.from(document.querySelectorAll('.parent-child-cb:checked')).map(cb => cb.value)
+    : [];
+
+  if (role === 'ORANG_TUA' && selectedStudentIds.length === 0) {
+    showToast('Peringatan', 'Pilih minimal 1 siswa asrama untuk dihubungkan dengan akun Orang Tua.', 'warning');
+    return;
+  }
+
+  showLoader(true, 'Menyimpan akun & relasi...');
   try {
     const res = await apiCall('saveUser', {
       user_id: userId || undefined,
-      username: document.getElementById('usr-username').value,
-      role: document.getElementById('usr-role').value,
+      username,
+      role,
       full_name: document.getElementById('usr-fullname').value,
-      ref_id: document.getElementById('usr-ref').value,
+      ref_id: parentRefId,
       password: document.getElementById('usr-pw').value
     });
+
+    if (role === 'ORANG_TUA') {
+      await apiCall('saveParentRelations', {
+        parent_id: parentRefId,
+        student_ids: selectedStudentIds
+      });
+    }
+
     showToast('Berhasil', res.message || 'Akun berhasil disimpan.');
     closeModal();
     navigateTo('users');
