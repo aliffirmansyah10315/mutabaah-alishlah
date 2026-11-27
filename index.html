@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="description" content="Aplikasi Mutaba'ah Yaumiyah SMA Islam Terpadu Al Ishlah Gorontalo">
+  <title>Mutaba’ah Yaumiyah — SMAIT Al Ishlah Gorontalo</title>
+
+  <!-- Google Fonts & RemixIcon -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #0f5132;
+      --primary-hover: #0a3b24;
+      --primary-medium: #198754;
+      --primary-light: #e8f5ee;
+      --primary-soft: #d1e7dd;
+
+      --gold: #d97706;
+      --gold-bg: #fef3c7;
+      --gold-border: #fde68a;
+
+      --success: #15803d;
+      --success-bg: #dcfce7;
+      --danger: #dc2626;
+      --danger-bg: #fee2e2;
+      --warning: #d97706;
+      --warning-bg: #fef3c7;
+      --info: #0284c7;
+      --info-bg: #e0f2fe;
+
+      --bg-body: #f4f7f5;
+      --bg-surface: #ffffff;
+      --bg-muted: #f8faf9;
+      --text-main: #1e293b;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --border-strong: #cbd5e1;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-xl: 20px;
+
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+      --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.07);
+      --shadow-lg: 0 16px 36px rgba(15, 23, 42, 0.14);
+
+      --sidebar-width: 272px;
+      --topbar-height: 68px;
+      --transition-fast: 0.18s ease;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .hidden { display: none !important; }
+
+    /* LOADER & TOAST */
+    .loader-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.48); backdrop-filter: blur(3px);
+      z-index: 9999; display: flex; align-items: center; justify-content: center;
+    }
+    .loader-card {
+      background: var(--bg-surface); padding: 24px 32px; border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg); text-align: center; min-width: 220px;
+    }
+    .spinner {
+      width: 36px; height: 36px; border: 3.5px solid var(--primary-soft); border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast-container {
+      position: fixed; top: 20px; right: 20px; z-index: 10000;
+      display: flex; flex-direction: column; gap: 10px; max-width: 380px;
+    }
+    .toast {
+      background: var(--bg-surface); border-left: 4px solid var(--primary); padding: 14px 16px;
+      border-radius: var(--radius-sm); box-shadow: var(--shadow-lg);
+      display: flex; align-items: flex-start; gap: 10px; animation: slideInRight 0.25s ease;
+    }
+    .toast.toast-success { border-left-color: var(--success); }
+    .toast.toast-error { border-left-color: var(--danger); }
+    .toast.toast-warning { border-left-color: var(--warning); }
+    .toast-title { font-weight: 700; font-size: 13px; color: var(--text-main); }
+    .toast-msg { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
+    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* LOGIN VIEW */
+    .login-wrapper {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+      background: linear-gradient(135deg, #082e1d 0%, #0f5132 50%, #e8f5ee 100%);
+    }
+    .login-container {
+      display: grid; grid-template-columns: 1.12fr 0.95fr; max-width: 1040px; width: 100%;
+      background: var(--bg-surface); border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-lg);
+    }
+    .login-brand-panel {
+      background: radial-gradient(circle at top right, rgba(255,255,255,0.08) 0%, transparent 60%),
+                  linear-gradient(160deg, #082e1d 0%, #0f5132 58%, #157347 100%);
+      color: #ffffff; padding: 42px 38px; display: flex; flex-direction: column; justify-content: space-between; gap: 28px;
+    }
+    .brand-badge {
+      display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.25); padding: 6px 14px; border-radius: 999px;
+      font-size: 12px; font-weight: 600; width: fit-content;
+    }
+    .brand-identity { display: flex; align-items: center; gap: 16px; margin-top: 24px; }
+    .brand-logo-wrap {
+      width: 58px; height: 58px; border-radius: 14px; background: #ffffff; padding: 6px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    }
+    .brand-identity h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+    .brand-school { font-size: 14px; font-weight: 600; color: #a3cfbb; margin-top: 3px; }
+    .brand-desc { margin-top: 18px; font-size: 13.5px; color: rgba(255, 255, 255, 0.9); line-height: 1.65; }
+    .brand-pillars { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
+    .pillar-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #e8f5ee; }
+    .pillar-item i { color: #6ee7b7; font-size: 17px; flex-shrink: 0; }
+    .brand-footer {
+      padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 11.5px; color: rgba(255, 255, 255, 0.82); display: flex; flex-direction: column; gap: 8px;
+    }
+    .api-status-pill {
+      display: inline-flex; align-items: center; gap: 8px; width: fit-content;
+      padding: 4px 12px; border-radius: 999px; background: rgba(0, 0, 0, 0.28); font-size: 11.5px; font-weight: 600;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; }
+    .api-status-pill.status-online .status-dot { background: #34d399; }
+    .api-status-pill.status-offline .status-dot { background: #f87171; }
+
+    .login-form-panel { padding: 46px 40px; display: flex; flex-direction: column; justify-content: center; }
+    .login-form-header h2 { font-size: 24px; font-weight: 800; color: var(--primary); }
+    .login-form-header p { color: var(--text-muted); margin: 4px 0 24px; font-size: 13.5px; }
+    .login-privacy-note {
+      margin-top: 22px; padding: 12px 14px; background: var(--bg-muted); border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm); display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: var(--text-secondary);
+    }
+    .login-privacy-note i { color: var(--primary); font-size: 16px; margin-top: 2px; }
+
+    /* APP SHELL */
+    .app-shell { display: flex; min-height: 100vh; width: 100%; }
+    .sidebar {
+      width: var(--sidebar-width); background: var(--bg-surface); border-right: 1px solid var(--border-color);
+      display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 1000;
+      transition: transform 0.25s ease;
+    }
+    .sidebar-header {
+      height: var(--topbar-height); padding: 0 18px; display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .sidebar-logo-wrap { width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .sidebar-brand-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+    .sidebar-title { font-weight: 800; font-size: 15px; color: var(--primary); line-height: 1.2; }
+    .sidebar-subtitle { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+    .sidebar-user-card {
+      margin: 14px; padding: 12px; background: var(--primary-light); border: 1px solid var(--primary-soft);
+      border-radius: var(--radius-md); display: flex; align-items: center; gap: 11px;
+    }
+    .user-avatar {
+      width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #ffffff;
+      font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .user-meta { min-width: 0; flex: 1; }
+    .user-name { font-weight: 700; font-size: 13px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .role-badge {
+      display: inline-block; margin-top: 3px; padding: 2px 8px; border-radius: 999px;
+      font-size: 10px; font-weight: 700; background: var(--primary); color: #ffffff; letter-spacing: 0.03em;
+    }
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 4px 12px 16px; }
+    .nav-section-label {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-muted); padding: 14px 10px 6px;
+    }
+    .nav-item {
+      width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text-secondary);
+      font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; text-align: left;
+      margin-bottom: 3px; transition: background-color var(--transition-fast), color var(--transition-fast);
+    }
+    .nav-item i { font-size: 18px; color: var(--text-muted); }
+    .nav-item:hover { background: var(--bg-muted); color: var(--primary); }
+    .nav-item:hover i { color: var(--primary); }
+    .nav-item.active { background: var(--primary); color: #ffffff; box-shadow: 0 2px 8px rgba(15, 81, 50, 0.22); }
+    .nav-item.active i { color: #ffffff; }
+    .sidebar-footer { padding: 12px 14px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+
+    .main-wrapper { flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column; min-width: 0; }
+    .topbar {
+      height: var(--topbar-height); background: var(--bg-surface); border-bottom: 1px solid var(--border-color);
+      padding: 0 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 900;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .page-title { font-size: 18px; font-weight: 800; color: var(--text-main); line-height: 1.2; }
+    .page-subtitle { font-size: 12px; color: var(--text-muted); }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .date-pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg-muted);
+      border: 1px solid var(--border-color); border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    }
+    .main-content { padding: 24px; max-width: 1400px; width: 100%; margin: 0 auto; animation: fadeInPage 0.22s ease; }
+    @keyframes fadeInPage { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* CARDS, GRIDS, FORMS, BUTTONS, TABLES */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px; margin-bottom: 22px; }
+    .stat-card {
+      background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md);
+      padding: 18px 20px; box-shadow: var(--shadow-sm); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    .stat-label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+    .stat-value { font-size: 26px; font-weight: 800; color: var(--text-main); margin-top: 4px; line-height: 1.15; }
+    .stat-sub { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+    .stat-icon {
+      width: 44px; height: 44px; border-radius: 12px; background: var(--primary-light); color: var(--primary);
+      display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
+    }
+    .stat-icon.gold { background: var(--gold-bg); color: var(--gold); }
+    .stat-icon.danger { background: var(--danger-bg); color: var(--danger); }
+    .stat-icon.info { background: var(--info-bg); color: var(--info); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin-bottom: 20px; }
+    .card {
+      background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm); margin-bottom: 20px; overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .card-title { font-size: 15.5px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+    .card-title i { color: var(--primary); font-size: 18px; }
+    .card-body { padding: 20px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-main); }
+    input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="date"], input[type="month"], select, textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+      font-family: inherit; font-size: 13.5px; color: var(--text-main); background-color: #ffffff;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.12); }
+
+    .input-icon-wrap { position: relative; display: flex; align-items: center; }
+    .input-icon-wrap .input-prefix { position: absolute; left: 12px; color: var(--text-muted); font-size: 17px; pointer-events: none; }
+    .input-icon-wrap input { padding-left: 38px; padding-right: 38px; }
+    .btn-icon-suffix { position: absolute; right: 8px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; font-size: 17px; }
+
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center; }
+    .filter-bar input, .filter-bar select { width: auto; min-width: 180px; flex: 1; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 16px;
+      border-radius: var(--radius-sm); font-family: inherit; font-size: 13.5px; font-weight: 600;
+      border: 1px solid transparent; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #ffffff; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-success { background: var(--success); color: #ffffff; }
+    .btn-danger { background: var(--danger); color: #ffffff; }
+    .btn-outline { background: #ffffff; border-color: var(--border-strong); color: var(--text-main); }
+    .btn-outline:hover:not(:disabled) { background: var(--bg-muted); border-color: var(--primary); color: var(--primary); }
+    .btn-ghost { background: transparent; color: var(--text-secondary); }
+    .btn-ghost:hover:not(:disabled) { background: var(--bg-muted); color: var(--primary); }
+    .btn-danger-outline { background: #ffffff; border-color: #fecaca; color: var(--danger); }
+    .btn-danger-outline:hover:not(:disabled) { background: var(--danger-bg); }
+    .btn-sm { padding: 6px 11px; font-size: 12.5px; }
+    .btn-lg { padding: 12px 20px; font-size: 14.5px; }
+    .btn-block { width: 100%; }
+
+    .btn-icon {
+      width: 36px; height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);
+      background: #ffffff; color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px; flex-shrink: 0;
+    }
+    .notif-btn { position: relative; }
+    .notif-badge {
+      position: absolute; top: -3px; right: -3px; background: var(--danger); color: #ffffff; font-size: 10px;
+      font-weight: 700; min-width: 18px; height: 18px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 4px;
+    }
+
+    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th {
+      background: var(--bg-muted); padding: 11px 14px; font-size: 11.5px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); white-space: nowrap;
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); font-size: 13.5px; vertical-align: middle; }
+    tr:hover td { background: #fafcfb; }
+
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+    .badge-success { background: var(--success-bg); color: var(--success); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger); }
+    .badge-warning { background: var(--warning-bg); color: var(--warning); }
+    .badge-info { background: var(--info-bg); color: var(--info); }
+    .badge-neutral { background: #e2e8f0; color: #334155; }
+
+    .alert { padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+    .alert-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
+    .alert-info { background: var(--info-bg); color: #0369a1; border: 1px solid #bae6fd; }
+    .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #bbf7d0; }
+    .alert-warning { background: var(--warning-bg); color: #92400e; border: 1px solid #fde68a; }
+
+    .top3-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+    .top3-card {
+      border: 1px solid var(--gold-border); border-radius: var(--radius-md); padding: 18px;
+      background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%); box-shadow: var(--shadow-sm);
+    }
+    .top3-rank {
+      display: inline-flex; align-items: center; gap: 6px; background: var(--gold); color: #ffffff;
+      font-weight: 800; font-size: 11.5px; padding: 4px 10px; border-radius: 999px; margin-bottom: 10px;
+    }
+
+    .indicator-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px;
+      border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 10px; background: #ffffff;
+    }
+    .indicator-check { width: 22px; height: 22px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
+
+    .progress-track { width: 100%; height: 9px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--primary); border-radius: 999px; transition: width 0.3s ease; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.52); backdrop-filter: blur(2px);
+      z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-card {
+      background: #ffffff; border-radius: var(--radius-md); max-width: 620px; width: 100%;
+      max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+    }
+    .modal-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #ffffff; z-index: 2;
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 700; }
+    .modal-body { padding: 20px; }
+
+    .mobile-only { display: none; }
+    @media (max-width: 960px) {
+      .login-container { grid-template-columns: 1fr; max-width: 540px; }
+      .sidebar { transform: translateX(-100%); box-shadow: var(--shadow-lg); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 999; }
+      .main-wrapper { margin-left: 0; }
+      .mobile-only { display: inline-flex; }
+      .desktop-only { display: none; }
+      .main-content { padding: 16px 14px 42px; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="global-loader" class="loader-overlay hidden" role="status" aria-live="polite">
+    <div class="loader-card">
+      <div class="spinner"></div>
+      <p id="loader-text">Memproses data...</p>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container" aria-live="assertive"></div>
+
+  <!-- =====================================================================
+       HALAMAN LOGIN
+       ===================================================================== -->
+  <section id="login-view" class="login-wrapper">
+    <div class="login-container">
+      <div class="login-brand-panel">
+        <div class="brand-top">
+          <div class="brand-badge">
+            <i class="ri-shield-check-line"></i>
+            <span>Boarding School Management SaaS</span>
+          </div>
+
+          <div class="brand-identity">
+            <div class="brand-logo-wrap">
+              <svg width="44" height="44" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="64" height="64" rx="14" fill="#0F5132"/>
+                <path d="M32 10L48 18V30C48 41.2 41.1 50.8 32 54C22.9 50.8 16 41.2 16 30V18L32 10Z" fill="#198754" stroke="#A3CFBB" stroke-width="2"/>
+                <path d="M23 26C26 24.5 29.5 25 32 27C34.5 25 38 24.5 41 26V40C38 38.5 34.5 39 32 41C29.5 39 26 38.5 23 40V26Z" fill="#FFFFFF"/>
+                <circle cx="32" cy="18" r="2.5" fill="#FBBF24"/>
+              </svg>
+            </div>
+            <div>
+              <h1>Mutaba’ah Yaumiyah</h1>
+              <p class="brand-school">SMA Islam Terpadu Al Ishlah Gorontalo</p>
+            </div>
+          </div>
+
+          <p class="brand-desc">
+            Sistem terpadu pencatatan ibadah harian siswa asrama, pemantauan kedisiplinan berbasis poin pembinaan, dan laporan perkembangan siswa asrama yang aman bagi sekolah, asrama, dan orang tua.
+          </p>
+
+          <div class="brand-pillars">
+            <div class="pillar-item"><i class="ri-checkbox-circle-fill"></i><span>Pencatatan Mutaba’ah Harian Anti-Duplikasi</span></div>
+            <div class="pillar-item"><i class="ri-checkbox-circle-fill"></i><span>Manajemen Poin Tertib & Pelanggaran Terverifikasi</span></div>
+            <div class="pillar-item"><i class="ri-checkbox-circle-fill"></i><span>Portal Orang Tua Real-Time dengan Proteksi Akses Silang</span></div>
+          </div>
+        </div>
+
+        <div class="brand-footer">
+          <div class="school-meta">NPSN 70015681 • Jl. Balkin, Kel. Molosipat U, Kec. Sipatana, Kota Gorontalo</div>
+          <div id="api-connection-badge" class="api-status-pill status-checking">
+            <span class="status-dot"></span>
+            <span id="api-connection-text">Memeriksa koneksi server API...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="login-form-panel">
+        <div class="login-form-header">
+          <h2>Assalamu’alaikum</h2>
+          <p>Silakan masuk menggunakan akun resmi sekolah Anda.</p>
+        </div>
+
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label for="login-username">Username</label>
+            <div class="input-icon-wrap">
+              <i class="ri-user-line input-prefix"></i>
+              <input type="text" id="login-username" placeholder="Contoh: admin13 atau ahmad001" autocomplete="username" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="login-password">Kata Sandi</label>
+            <div class="input-icon-wrap">
+              <i class="ri-lock-password-line input-prefix"></i>
+              <input type="password" id="login-password" placeholder="Masukkan kata sandi" autocomplete="current-password" required>
+              <button type="button" id="toggle-password" class="btn-icon-suffix" aria-label="Tampilkan kata sandi">
+                <i class="ri-eye-off-line"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="login-error" class="alert alert-danger hidden" role="alert"></div>
+
+          <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block btn-lg">
+            <i class="ri-login-box-line"></i>
+            <span>Masuk ke Aplikasi</span>
+          </button>
+        </form>
+
+        <div class="login-privacy-note">
+          <i class="ri-lock-2-line"></i>
+          <div>
+            <strong>Perlindungan Privasi Data Siswa Asrama:</strong> Setiap akun memiliki batasan akses berbasis peran. Orang tua hanya dapat memantau data putra/putrinya sendiri.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       APLIKASI UTAMA (DASHBOARD SHELL)
+       ===================================================================== -->
+  <div id="app-view" class="app-shell hidden">
+    <div id="sidebar-backdrop" class="sidebar-backdrop hidden" onclick="toggleMobileSidebar(false)"></div>
+
+    <aside id="app-sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo-wrap">
+          <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
+            <rect width="64" height="64" rx="14" fill="#0F5132"/>
+            <path d="M32 10L48 18V30C48 41.2 41.1 50.8 32 54C22.9 50.8 16 41.2 16 30V18L32 10Z" fill="#198754"/>
+            <path d="M23 26C26 24.5 29.5 25 32 27C34.5 25 38 24.5 41 26V40C38 38.5 34.5 39 32 41C29.5 39 26 38.5 23 40V26Z" fill="#FFFFFF"/>
+          </svg>
+        </div>
+        <div class="sidebar-brand-text">
+          <span class="sidebar-title">Mutaba’ah Yaumiyah</span>
+          <span class="sidebar-subtitle">SMAIT Al Ishlah Gorontalo</span>
+        </div>
+        <button type="button" class="btn-icon mobile-only" onclick="toggleMobileSidebar(false)"><i class="ri-close-line"></i></button>
+      </div>
+
+      <div class="sidebar-user-card">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-meta">
+          <div class="user-name" id="sidebar-fullname">Pengguna</div>
+          <div class="role-badge" id="sidebar-role-badge">ROLE</div>
+        </div>
+      </div>
+
+      <nav id="sidebar-nav" class="sidebar-nav"></nav>
+
+      <div class="sidebar-footer">
+        <button type="button" class="btn btn-ghost btn-sm btn-block" onclick="openChangePasswordModal()">
+          <i class="ri-key-2-line"></i><span>Ubah Kata Sandi</span>
+        </button>
+        <button type="button" class="btn btn-danger-outline btn-sm btn-block" onclick="handleLogout()">
+          <i class="ri-logout-box-r-line"></i><span>Keluar (Logout)</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="btn-icon mobile-only" onclick="toggleMobileSidebar(true)"><i class="ri-menu-2-line"></i></button>
+          <div>
+            <h1 id="topbar-page-title" class="page-title">Dashboard</h1>
+            <p id="topbar-page-subtitle" class="page-subtitle">Tahun Ajaran 2026/2027</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="date-pill desktop-only"><i class="ri-calendar-event-line"></i><span id="topbar-today-date">-</span></div>
+          <button type="button" class="btn-icon notif-btn" onclick="openNotificationsModal()" title="Notifikasi">
+            <i class="ri-notification-3-line"></i>
+            <span id="notif-badge" class="notif-badge hidden">0</span>
+          </button>
+        </div>
+      </header>
+
+      <main id="main-content" class="main-content"></main>
+    </div>
+  </div>
+
+  <!-- MODAL CONTAINER -->
+  <div id="modal-root"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/teacher.js"></script>
+  <script src="js/student.js"></script>
+  <script src="js/parent.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
