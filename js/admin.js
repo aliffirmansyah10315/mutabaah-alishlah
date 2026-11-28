@@ -390,11 +390,13 @@ async function renderUsersPage(container) {
     relByParent[pid].push(r);
   });
 
+  window.__ADMIN_USER_CACHE = { users, students, relByParent };
+
   container.innerHTML = `
     <div class="card">
       <div class="card-header">
         <div class="card-title"><i class="ri-shield-user-line"></i> Daftar Akun Terdaftar (${users.length})</div>
-        <button class="btn btn-primary btn-sm" onclick='openUserModal(null, ${JSON.stringify(students)}, ${JSON.stringify(relByParent)})'>
+        <button type="button" class="btn btn-primary btn-sm" onclick="openUserModalById('')">
           <i class="ri-user-add-line"></i> Buat Akun Baru
         </button>
       </div>
@@ -419,7 +421,7 @@ async function renderUsersPage(container) {
                   <td>${refDisplay}</td>
                   <td>${u.is_active ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Nonaktif</span>'}</td>
                   <td>
-                    <button class="btn btn-outline btn-sm" onclick='openUserModal(${JSON.stringify(u)}, ${JSON.stringify(students)}, ${JSON.stringify(relByParent)})'>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="openUserModalById('${escapeHtml(u.user_id)}')">
                       Edit / Atur Anak
                     </button>
                   </td>
@@ -431,6 +433,12 @@ async function renderUsersPage(container) {
       </div>
     </div>
   `;
+}
+
+function openUserModalById(userId) {
+  const cache = window.__ADMIN_USER_CACHE || { users: [], students: [], relByParent: {} };
+  const u = userId ? cache.users.find(item => String(item.user_id) === String(userId)) : null;
+  openUserModal(u, cache.students, cache.relByParent);
 }
 
 function toggleParentChildrenSection() {
