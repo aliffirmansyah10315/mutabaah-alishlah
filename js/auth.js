@@ -71,8 +71,12 @@ function setupLoginEvents() {
         localStorage.setItem(TOKEN_STORAGE_KEY, STATE.token);
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(STATE.user));
 
-        showToast('Login Berhasil', 'Selamat datang, ' + STATE.user.full_name);
         enterAppShell();
+        if (String(STATE.user.username || '').trim().toLowerCase() === 'shofiyyah037') {
+          showShofiyyahWelcomeAnimation(STATE.user.full_name);
+        } else {
+          showToast('Login Berhasil', 'Selamat datang, ' + STATE.user.full_name);
+        }
       } catch (err) {
         errBox.textContent = err.message;
         errBox.classList.remove('hidden');
@@ -100,10 +104,51 @@ function handleLogout(silent = false) {
   document.body.classList.remove('theme-pink-butterfly');
   const decor = document.getElementById('pink-garden-decor');
   if (decor) decor.remove();
+  const welcomeOverlay = document.getElementById('shofiyyah-welcome-overlay');
+  if (welcomeOverlay) welcomeOverlay.remove();
 
   document.getElementById('app-view').classList.add('hidden');
   document.getElementById('login-view').classList.remove('hidden');
   if (!silent) showToast('Keluar Sesi', 'Anda telah keluar dari aplikasi.');
+}
+
+function showShofiyyahWelcomeAnimation(fullName) {
+  const existing = document.getElementById('shofiyyah-welcome-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'shofiyyah-welcome-overlay';
+  overlay.className = 'welcome-pink-overlay';
+  overlay.innerHTML = `
+    <div class="welcome-pink-card">
+      <span class="welcome-petal" style="top:14px;left:18px;">🌸</span>
+      <span class="welcome-petal" style="top:18px;right:22px;animation-delay:0.5s;">🦋</span>
+      <span class="welcome-petal" style="bottom:18px;left:24px;animation-delay:1s;">🌷</span>
+      <span class="welcome-petal" style="bottom:16px;right:20px;animation-delay:1.4s;">🌺</span>
+
+      <div class="welcome-icon-circle">🌸</div>
+      <div class="welcome-pink-title">Assalamu’alaikum, Selamat Datang!</div>
+      <div class="welcome-pink-name">${escapeHtml(fullName || 'Shofiyyah')} ✨</div>
+      <p class="welcome-pink-sub">
+        Semoga hari ini penuh keberkahan, semangat beribadah, dan istiqamah dalam mengisi Mutaba’ah Yaumiyah.
+      </p>
+      <button type="button" class="btn btn-primary btn-lg" style="border-radius:999px;padding:10px 28px;" onclick="closeShofiyyahWelcome()">
+        Mulai Hari Ini 🦋
+      </button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  setTimeout(() => closeShofiyyahWelcome(), 4200);
+}
+
+function closeShofiyyahWelcome() {
+  const overlay = document.getElementById('shofiyyah-welcome-overlay');
+  if (!overlay || overlay.classList.contains('fade-out')) return;
+  overlay.classList.add('fade-out');
+  setTimeout(() => {
+    if (overlay.parentNode) overlay.remove();
+  }, 550);
 }
 
 function openChangePasswordModal() {
