@@ -107,6 +107,14 @@ function handleLogout(silent = false) {
   const welcomeOverlay = document.getElementById('shofiyyah-welcome-overlay');
   if (welcomeOverlay) welcomeOverlay.remove();
 
+  // Kembalikan logo sidebar ke default
+  const logoImg = document.getElementById('sidebar-brand-logo');
+  if (logoImg) {
+    logoImg.src = 'logo.png';
+    logoImg.style.borderRadius = '8px';
+    logoImg.style.border = 'none';
+  }
+
   document.getElementById('app-view').classList.add('hidden');
   document.getElementById('login-view').classList.remove('hidden');
   if (!silent) showToast('Keluar Sesi', 'Anda telah keluar dari aplikasi.');
@@ -126,7 +134,10 @@ function showShofiyyahWelcomeAnimation(fullName) {
       <span class="welcome-petal" style="bottom:18px;left:24px;animation-delay:1s;">🌷</span>
       <span class="welcome-petal" style="bottom:16px;right:20px;animation-delay:1.4s;">🌺</span>
 
-      <div class="welcome-icon-circle">🌸</div>
+      <div class="welcome-icon-circle" style="overflow:hidden;padding:4px;background:#ffffff;">
+        <img src="rabbit-shofiyyah.jpg" alt="Shofiyyah" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span style="display:none;font-size:40px;">🌸</span>
+      </div>
       <div class="welcome-pink-title">Assalamu’alaikum, Selamat Datang!</div>
       <div class="welcome-pink-name">${escapeHtml(fullName || 'Shofiyyah')} ✨</div>
       <p class="welcome-pink-sub">
