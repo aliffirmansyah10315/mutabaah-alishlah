@@ -57,8 +57,47 @@ function enterAppShell() {
   document.getElementById('sidebar-avatar').textContent = (u.full_name || 'U').charAt(0).toUpperCase();
   document.getElementById('topbar-today-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
+  applyCustomUserTheme(u);
   renderSidebarMenu();
   navigateTo('dashboard');
+}
+
+function applyCustomUserTheme(user) {
+  const uname = String((user && user.username) || '').trim().toLowerCase();
+  const existingDecor = document.getElementById('pink-garden-decor');
+  if (existingDecor) existingDecor.remove();
+
+  if (uname === 'shofiyyah037') {
+    document.body.classList.add('theme-pink-butterfly');
+    const decor = document.createElement('div');
+    decor.id = 'pink-garden-decor';
+    decor.className = 'pink-garden-decor';
+    decor.innerHTML = `
+      <svg class="garden-float garden-corner-tl" viewBox="0 0 120 120" fill="none">
+        <circle cx="28" cy="28" r="14" fill="#F9A8D4"/>
+        <circle cx="52" cy="22" r="12" fill="#F472B6"/>
+        <circle cx="22" cy="52" r="12" fill="#F472B6"/>
+        <circle cx="36" cy="36" r="7" fill="#FDE047"/>
+        <path d="M10 75C30 60 55 35 80 10" stroke="#EC4899" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <svg class="garden-float garden-corner-br" viewBox="0 0 120 120" fill="none">
+        <circle cx="28" cy="28" r="14" fill="#F9A8D4"/>
+        <circle cx="52" cy="22" r="12" fill="#F472B6"/>
+        <circle cx="22" cy="52" r="12" fill="#F472B6"/>
+        <circle cx="36" cy="36" r="7" fill="#FDE047"/>
+        <path d="M10 75C30 60 55 35 80 10" stroke="#EC4899" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <span class="garden-float butterfly-1">🦋</span>
+      <span class="garden-float butterfly-2">🦋</span>
+      <span class="garden-float butterfly-3">🦋</span>
+      <span class="garden-float flower-1">🌸</span>
+      <span class="garden-float flower-2">🌺</span>
+      <span class="garden-float flower-3">🌷</span>
+    `;
+    document.body.appendChild(decor);
+  } else {
+    document.body.classList.remove('theme-pink-butterfly');
+  }
 }
 
 function renderSidebarMenu() {
