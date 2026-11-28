@@ -96,6 +96,11 @@ function handleLogout(silent = false) {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(USER_STORAGE_KEY);
 
+  // Bersihkan tema khusus (pink/bunga/kupu-kupu) saat logout agar login screen kembali normal
+  document.body.classList.remove('theme-pink-butterfly');
+  const decor = document.getElementById('pink-garden-decor');
+  if (decor) decor.remove();
+
   document.getElementById('app-view').classList.add('hidden');
   document.getElementById('login-view').classList.remove('hidden');
   if (!silent) showToast('Keluar Sesi', 'Anda telah keluar dari aplikasi.');
